@@ -3,7 +3,6 @@ import {
   Keypair,
   Connection,
   PublicKey,
-  clusterApiUrl,
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
@@ -21,38 +20,24 @@ import {
   DataV2,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import {
-  bundlrStorage,
-  keypairIdentity,
-  Metaplex,
-  UploadMetadataInput,
-} from "@metaplex-foundation/js";
+import { Metaplex, UploadMetadataInput } from "@metaplex-foundation/js";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import {
+  getMetaplexInstance,
+  getNetworkConfig,
+  uploadMetadata,
+} from "./helper";
+import {
+  decimals,
+  image,
+  name,
+  networkName,
+  royalty,
+  setMintAddress,
+  symbol,
+  totalSupply,
+} from "./consts";
 require("dotenv").config();
-
-// network config
-const getNetworkConfig = (network: string) => {
-  return network === "mainnet"
-    ? {
-        cluster: clusterApiUrl("mainnet-beta"),
-        address: "https://node1.bundlr.network",
-        providerUrl: "https://api.mainnet-beta.solana.com",
-      }
-    : {
-        cluster: clusterApiUrl("devnet"),
-        address: "https://devnet.bundlr.network",
-        providerUrl: "https://api.devnet.solana.com",
-      };
-};
-
-// upload metadata on arwave function
-const uploadMetadata = async (
-  metaplex: Metaplex,
-  tokenMetadata: UploadMetadataInput
-): Promise<string> => {
-  const { uri } = await metaplex.nfts().uploadMetadata(tokenMetadata);
-  return uri;
-};
 
 // mint token instuction function
 const createMintTokenTransaction = async (
@@ -60,7 +45,8 @@ const createMintTokenTransaction = async (
   metaplex: Metaplex,
   payer: Keypair,
   mintKeypair: Keypair,
-  token: any,
+  decimals: any,
+  totalSupply: any,
   tokenMetadata: DataV2,
   destinationWallet: PublicKey,
   mintAuthority: PublicKey
@@ -89,7 +75,7 @@ const createMintTokenTransaction = async (
     // 2nd
     createInitializeMintInstruction(
       mintKeypair.publicKey,
-      token.decimals,
+      decimals,
       mintAuthority,
       // freezeAuthority,
       null,
@@ -107,7 +93,7 @@ const createMintTokenTransaction = async (
       mintKeypair.publicKey,
       tokenATA,
       mintAuthority,
-      token.totalSupply * Math.pow(10, token.decimals)
+      totalSupply * Math.pow(10, decimals)
     ),
     // 5th
     createCreateMetadataAccountV3Instruction(
@@ -145,36 +131,20 @@ const createMintTokenTransaction = async (
  main function
 */
 const main = async () => {
-  const network = getNetworkConfig("devnet");
-  const connection = new Connection(network.cluster);
   const secretKey: any = process.env.USER_WALLET;
   const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
   console.log("userWallet address: ", userWallet.publicKey.toString());
 
-  // create metaplex instance
-  const metaplex = Metaplex.make(connection)
-    .use(keypairIdentity(userWallet))
-    .use(
-      bundlrStorage({
-        address: network.address,
-        providerUrl: network.providerUrl,
-        timeout: 60000,
-      })
-    );
-
-  // token data
-  const token = {
-    decimals: 6,
-    totalSupply: 10000000000000, //10,000,000,000,000
-  };
+  const network = getNetworkConfig(networkName);
+  const connection = new Connection(network.cluster);
+  const metaplex = getMetaplexInstance(network, connection, userWallet);
 
   // token ofchain metadata
   const tokenMetadata: UploadMetadataInput = {
-    name: "AbdullahTestToken", // token name
-    symbol: "ATT", // token symbol
+    name: name, // token name
+    symbol: symbol, // token symbol
     // image uri
-    image:
-      "https://quizizz.com/_media/quizzes/ed154ed7-0959-4a99-9aac-ff2256cd000b_400_400",
+    image: image,
   };
 
   // upload metadata
@@ -185,7 +155,7 @@ const main = async () => {
     name: tokenMetadata.name,
     symbol: tokenMetadata.symbol,
     uri: metadataUri, // uploaded metadata uri
-    sellerFeeBasisPoints: 1000, // royalty 10%
+    sellerFeeBasisPoints: royalty, // royalty 10%
     creators: null,
     collection: null,
     uses: null,
@@ -194,6 +164,8 @@ const main = async () => {
   // new solana address for token
   let mintKeypair = Keypair.generate();
   console.log(`token Address: ${mintKeypair.publicKey.toString()}`);
+  // save info file
+  await setMintAddress(mintKeypair.publicKey.toString());
 
   const mintTransaction: VersionedTransaction =
     await createMintTokenTransaction(
@@ -201,10 +173,11 @@ const main = async () => {
       metaplex,
       userWallet,
       mintKeypair,
-      token,
+      decimals,
+      totalSupply,
       tokenMetadataV2,
       userWallet.publicKey,
-      mintKeypair.publicKey
+      userWallet.publicKey
     );
 
   // get chain block data
@@ -217,10 +190,8 @@ const main = async () => {
     lastValidBlockHeight,
     blockhash,
   });
+
   console.log(`transaction Hash`, transactionId);
-  console.log(
-    `Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`
-  );
 };
 
 main();
