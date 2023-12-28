@@ -49,8 +49,8 @@ const createMintTokenTransaction = async (
   totalSupply: any,
   tokenMetadata: DataV2,
   destinationWallet: PublicKey,
-  mintAuthority: PublicKey
-  // freezeAuthority: PublicKey,
+  mintAuthority: PublicKey,
+  freezeAuthority: PublicKey,
 ) => {
   const requiredBalance = await getMinimumBalanceForRentExemptMint(connection);
   const metadataPDA = metaplex
@@ -77,8 +77,8 @@ const createMintTokenTransaction = async (
       mintKeypair.publicKey,
       decimals,
       mintAuthority,
-      // freezeAuthority,
-      null,
+      freezeAuthority,
+      // null,
       TOKEN_PROGRAM_ID
     ),
     // 3rd
@@ -155,8 +155,10 @@ const main = async () => {
     name: tokenMetadata.name,
     symbol: tokenMetadata.symbol,
     uri: metadataUri, // uploaded metadata uri
-    sellerFeeBasisPoints: royalty, // royalty 10%
-    creators: null,
+    sellerFeeBasisPoints: royalty, 
+    creators: [
+      { address: userWallet.publicKey, share: 100 },
+    ],
     collection: null,
     uses: null,
   } as DataV2;
@@ -177,7 +179,8 @@ const main = async () => {
       totalSupply,
       tokenMetadataV2,
       userWallet.publicKey,
-      userWallet.publicKey
+      userWallet.publicKey, // mintAuthority
+      userWallet.publicKey, // freezeAuthority
     );
 
   // get chain block data

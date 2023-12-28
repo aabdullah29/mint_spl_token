@@ -6,6 +6,7 @@ import {
   creators,
   getMintAddress,
   image,
+  isMutable,
   name,
   networkName,
   newUpdateAuthority,
@@ -16,7 +17,6 @@ require("dotenv").config();
 
 const secretKey: any = process.env.USER_WALLET;
 const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
-console.log('\n\n\n my address: ', userWallet.publicKey);
 
 (async () => {
   const MINT_ADDRESS = await getMintAddress(); //token address
@@ -27,43 +27,46 @@ console.log('\n\n\n my address: ', userWallet.publicKey);
   const token = await metaplex.nfts().findByMint({
     mintAddress: new PublicKey(MINT_ADDRESS),
   });
+
   console.log(`Updating Metadata of Token: ${MINT_ADDRESS}`);
-  console.log("Token:", token);
+  // console.log("Token:", token);
 
   if (!token) {
     throw new Error("Unable to find existing token or image uri!");
   }
 
-  // new metadata
-  const newMetadata = {
-    name: name,
-    symbol: symbol,
-    image: image,
-  };
-
   // upload new metadata
   const { uri: newUri } = await metaplex.nfts().uploadMetadata({
     ...token.json,
-    name: newMetadata.name,
-    symbol: newMetadata.symbol,
-    image: newMetadata.image,
+    ...(name ? { name: name } : {}),
+    ...(symbol ? { symbol: symbol } : {}),
+    ...(image ? { image: image } : {}),
   });
 
   // onchain update
   const update = await metaplex.nfts().update({
-    name: newMetadata.name,
-    symbol: newMetadata.symbol,
-    sellerFeeBasisPoints: royalty,
-    creators: creators
-      ? [{ address: userWallet.publicKey, share: 0, authority: userWallet}, ...creators]
-      : undefined,
     nftOrSft: token,
-    uri: newUri,
-    isMutable: true,
-    ...(newUpdateAuthority && newUpdateAuthority != userWallet.publicKey.toString()
+    isMutable: isMutable,
+    authority: userWallet,
+    ...(name ? { name: name } : {}),
+    ...(symbol ? { symbol: symbol } : {}),
+    ...(newUri ? { uri: newUri } : {}),
+    // sellerFeeBasisPoints
+    ...(royalty ? { sellerFeeBasisPoints: royalty } : {}),
+    // creators
+    ...(creators
+      ? {
+          creators: [
+            { address: userWallet.publicKey, share: 0, authority: userWallet },
+            ...creators,
+          ],
+        }
+      : {}),
+    // newUpdateAuthority
+    ...(newUpdateAuthority &&
+    newUpdateAuthority != userWallet.publicKey.toString()
       ? {
           newUpdateAuthority: toPublicKey(newUpdateAuthority),
-          authority: userWallet,
         }
       : {}),
   });
