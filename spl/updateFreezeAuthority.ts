@@ -6,6 +6,8 @@ import {
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
+  Transaction,
+  sendAndConfirmTransaction,
 } from "@solana/web3.js";
 import {
   MINT_SIZE,
@@ -15,12 +17,18 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
+  createSetAuthorityInstruction,
+  AuthorityType,
 } from "@solana/spl-token";
 import {
   DataV2,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { Metaplex, UploadMetadataInput } from "@metaplex-foundation/js";
+import {
+  Metaplex,
+  UploadMetadataInput,
+  toPublicKey,
+} from "@metaplex-foundation/js";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import {
   getMetaplexInstance,
@@ -29,6 +37,7 @@ import {
 } from "./helper";
 import {
   decimals,
+  getMintAddress,
   image,
   name,
   networkName,
@@ -50,7 +59,7 @@ const createMintTokenTransaction = async (
   tokenMetadata: DataV2,
   destinationWallet: PublicKey,
   mintAuthority: PublicKey,
-  freezeAuthority: PublicKey | null,
+  freezeAuthority: PublicKey | null
 ) => {
   const requiredBalance = await getMinimumBalanceForRentExemptMint(connection);
   const metadataPDA = metaplex
@@ -112,6 +121,14 @@ const createMintTokenTransaction = async (
       }
     )
   );
+  let tx = new Transaction().add(
+    createSetAuthorityInstruction(
+      mintKeypair.publicKey, // mint acocunt || token account
+      payer.publicKey, // current auth
+      AuthorityType.MintTokens, // authority type
+      null // new auth (you can pass `null` to close it)
+    )
+  );
   // get last block and initiate transaction
   const latestBlockhash = await connection.getLatestBlockhash();
   const messageV0 = new TransactionMessage({
@@ -132,65 +149,26 @@ const main = async () => {
   const secretKey: any = process.env.USER_WALLET;
   const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
   console.log("userWallet address: ", userWallet.publicKey.toString());
-
+  const MINT_ADDRESS = await getMintAddress(); //token address
   const network = getNetworkConfig(networkName);
   const connection = new Connection(network.cluster);
-  const metaplex = getMetaplexInstance(network, connection, userWallet);
 
-  // token ofchain metadata
-  const tokenMetadata: UploadMetadataInput = {
-    name: name, // token name
-    symbol: symbol, // token symbol
-    // image uri
-    image: image,
-  };
-
-  // upload metadata
-  let metadataUri = await uploadMetadata(metaplex, tokenMetadata);
-
-  // convert metadata in V2
-  const tokenMetadataV2 = {
-    name: tokenMetadata.name,
-    symbol: tokenMetadata.symbol,
-    uri: metadataUri, // uploaded metadata uri
-    sellerFeeBasisPoints: royalty, 
-    creators: [
-      { address: userWallet.publicKey, share: 100 },
-    ],
-    collection: null,
-    uses: null,
-  } as DataV2;
-
-  // new solana address for token
-  let mintKeypair = Keypair.generate();
-  console.log(`token Address: ${mintKeypair.publicKey.toString()}`);
-  // save info file
-  await setMintAddress(mintKeypair.publicKey.toString());
-
-  const mintTransaction: VersionedTransaction =
-    await createMintTokenTransaction(
-      connection,
-      metaplex,
-      userWallet,
-      mintKeypair,
-      decimals,
-      totalSupply,
-      tokenMetadataV2,
-      userWallet.publicKey,
-      userWallet.publicKey, // mintAuthority
-      null, // freezeAuthority
-    );
-
-  // get chain block data
-  let { lastValidBlockHeight, blockhash } = await connection.getLatestBlockhash(
-    "finalized"
+  let authorityTransaction = new Transaction().add(
+    createSetAuthorityInstruction(
+      toPublicKey(MINT_ADDRESS), // mint acocunt || token account
+      userWallet.publicKey, // current auth
+      AuthorityType.FreezeAccount, // authority type
+      null // new auth (you can pass `null` to close it)
+    )
   );
-  const transactionId = await connection.sendTransaction(mintTransaction);
-  await connection.confirmTransaction({
-    signature: transactionId,
-    lastValidBlockHeight,
-    blockhash,
-  });
+
+  console.log(`Updating Authority of Token: ${MINT_ADDRESS}`);
+  
+  const transactionId = await sendAndConfirmTransaction(
+    connection,
+    authorityTransaction,
+    [userWallet]
+  );
 
   console.log(`transaction Hash`, transactionId);
 };
