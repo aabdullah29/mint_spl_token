@@ -1,5 +1,5 @@
 import { Keypair, Connection, clusterApiUrl } from "@solana/web3.js";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, access } from "fs/promises";
 import {
   bundlrStorage,
   keypairIdentity,
@@ -58,10 +58,7 @@ export const txUrl = (txId: string) => {
 };
 
 
-
-
-  const path = "spl/outputs/mintAddress.txt";
-export const getFileData = async (path:string, key:string) => {
+export const getFileData = async (path: string, key: string) => {
   let mintAddress = "";
   // const path = "spl/outputs/mintAddress.txt";
   // const key = "MINT_ADDRESS";
@@ -76,7 +73,7 @@ export const getFileData = async (path:string, key:string) => {
         throw Error("JSON_Parse.");
       }
     } else {
-      throw Error("MINT_ADDRESS not found.");
+      throw Error(`key "${key}"" not found.`);
     }
   } catch (error) {
     console.error("Error reading file:", error);
@@ -86,16 +83,37 @@ export const getFileData = async (path:string, key:string) => {
   return mintAddress;
 };
 
-
-export const writeFileData = async (path:string, key:string,data:string)=>{
+export const writeFileData = async (
+  path: string,
+  key: string,
+  data: string
+) => {
   // const path = "spl/outputs/mintAddress.txt";
   // const key = "MINT_ADDRESS";
   // const data = "addresssssss"
   try {
-    await writeFile(path, `{"${key}":"${data}"}`, 'utf-8');
-    console.log(path ,'<= success!');
+    let jsonData;
+    // Check if the file exists
+    const fileExists = await access(path)
+      .then(() => true)
+      .catch(() => false);
+
+    if (fileExists) {
+      // Use 'a' flag for append if the file exists, and 'w' flag for write if it doesn't
+      // const flag = fileExists ? "a" : "w";
+      const existingData = await readFile(path, "utf-8");
+      jsonData = JSON.parse(existingData || existingData.length >=2 ? existingData : "{}");
+      jsonData[key] = data;
+    }
+
+    // Write data to the file
+    await writeFile(path, JSON.stringify(jsonData, null, 2) ?? `{"${key}":"${data}"}`, {
+      /*flag,*/ encoding: "utf-8",
+    });
+    console.log(path, "<= success!");
   } catch (error) {
-    console.error('Error writing file:', error);
-    throw error; 
+    console.error("Error writing file:", error);
+    throw error;
   }
-}
+};
+

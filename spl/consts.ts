@@ -10,8 +10,11 @@ export const symbol = "$WOKE";
 export const image =
   "https://bafkreievpa5j5w7mpbny3gpzvwdckculahwnvzwpnaekns5dvrj7kma5ra.ipfs.nftstorage.link/";
 export const royalty = 1000; // 100 = 1%
-export const newUpdateAuthority = undefined;
 export const isMutable = true;
+export const newUpdateAuthority = undefined;
+export const mintAuthority = null;
+export const freezeAuthority = null;
+
 // royalty distribution
 export const creators = newUpdateAuthority
   ? [{ address: toPublicKey(newUpdateAuthority), share: 100 }]
