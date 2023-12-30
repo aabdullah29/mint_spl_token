@@ -12,6 +12,7 @@ import {
   newUpdateAuthority,
   royalty,
   symbol,
+  verifyAuthorityForFee,
 } from "./consts";
 require("dotenv").config();
 
@@ -61,7 +62,11 @@ const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
             ...creators,
           ],
         }
-      : {}),
+      : verifyAuthorityForFee? {
+        creators: [
+          { address: userWallet.publicKey, share: 100, authority: userWallet },
+        ],
+      }: {}),
     // newUpdateAuthority
     ...(newUpdateAuthority &&
     newUpdateAuthority != userWallet.publicKey.toString()

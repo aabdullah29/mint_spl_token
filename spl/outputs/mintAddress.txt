@@ -1,3 +1,3 @@
 {
-  "MINT_ADDRESS": "4GrfoxvoM1omPzNfhi1L2hbGDw3ysn6oxLL4oNRFjnem"
+  "MINT_ADDRESS": "J4A7JJfJ3twKqjeBo9d37ccJuzrGP8iqbLkXTxZJU2GA"
 }

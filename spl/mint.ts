@@ -155,7 +155,7 @@ const main = async () => {
     uri: metadataUri, // uploaded metadata uri
     sellerFeeBasisPoints: royalty, 
     creators: [
-      { address: userWallet.publicKey, share: 100 },
+      { address: userWallet.publicKey, share: 100, verified:true },
     ],
     collection: null,
     uses: null,

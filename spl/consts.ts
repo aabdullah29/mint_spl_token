@@ -14,7 +14,7 @@ export const isMutable = true;
 export const newUpdateAuthority = undefined;
 export const mintAuthority = null;
 export const freezeAuthority = null;
-
+export const verifyAuthorityForFee = true;
 // royalty distribution
 export const creators = newUpdateAuthority
   ? [{ address: toPublicKey(newUpdateAuthority), share: 100 }]
