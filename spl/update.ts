@@ -3,7 +3,6 @@ import { toPublicKey } from "@metaplex-foundation/js";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { getMetaplexInstance, getNetworkConfig } from "./helper";
 import {
-  creators,
   getMintAddress,
   image,
   isMutable,
@@ -12,7 +11,7 @@ import {
   newUpdateAuthority,
   royalty,
   symbol,
-  verifyAuthorityForFee,
+  verifySignerAsCreator,
 } from "./consts";
 require("dotenv").config();
 
@@ -55,14 +54,7 @@ const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
     // sellerFeeBasisPoints
     ...(royalty ? { sellerFeeBasisPoints: royalty } : {}),
     // creators
-    ...(creators
-      ? {
-          creators: [
-            { address: userWallet.publicKey, share: 0, authority: userWallet },
-            ...creators,
-          ],
-        }
-      : verifyAuthorityForFee? {
+    ...(verifySignerAsCreator? {
         creators: [
           { address: userWallet.publicKey, share: 100, authority: userWallet },
         ],
