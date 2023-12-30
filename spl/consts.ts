@@ -1,8 +1,7 @@
-import fs from "fs";
 import { getFileData, writeFileData } from "./helper";
 import { toPublicKey } from "@metaplex-foundation/js";
+require("dotenv").config();
 
-export const networkName = "devnet";
 export const decimals = 6;
 export const totalSupply = 96000000000;
 export const name = "WOKE FRENS";
@@ -20,12 +19,18 @@ export const creators = newUpdateAuthority
   ? [{ address: toPublicKey(newUpdateAuthority), share: 100 }]
   : undefined;
 
+export const networkName = !!process.env.NETWORK
+  ? process.env.NETWORK
+  : "mainnet";
+
 const mintAddressConfig = {
   path: "spl/outputs/mintAddress.txt",
   key: "MINT_ADDRESS",
 };
 export const getMintAddress = async () => {
-  return getFileData(mintAddressConfig.path, mintAddressConfig.key);
+  return !!process.env.TOKEN_ADDRESS
+    ? process.env.TOKEN_ADDRESS
+    : getFileData(mintAddressConfig.path, mintAddressConfig.key);
 };
 export const setMintAddress = async (data: string) => {
   return writeFileData(mintAddressConfig.path, mintAddressConfig.key, data);
