@@ -30,10 +30,12 @@ import {
 import {
   decimals,
   image,
+  isMutable,
   name,
   networkName,
   royalty,
   setMintAddress,
+  setMintKeypair,
   symbol,
   totalSupply,
 } from "./consts";
@@ -157,6 +159,8 @@ const main = async () => {
     creators: [
       { address: userWallet.publicKey, share: 100, verified:true },
     ],
+    authority: userWallet,
+    isMutable: isMutable,
     collection: null,
     uses: null,
   } as DataV2;
@@ -166,6 +170,7 @@ const main = async () => {
   console.log(`token Address: ${mintKeypair.publicKey.toString()}`);
   // save info file
   await setMintAddress(mintKeypair.publicKey.toString());
+  await setMintKeypair(mintKeypair.secretKey.toString());
 
   const mintTransaction: VersionedTransaction =
     await createMintTokenTransaction(
