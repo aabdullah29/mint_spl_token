@@ -4,14 +4,14 @@ require("dotenv").config();
 
 export const decimals = 6;
 export const totalSupply = 96000000000;
-export const name = "WOKE FRENS";
-export const symbol = "$WOKE";
+export const name = "REWARD";
+export const symbol = "$RD";
 export const image =
   "https://bafkreievpa5j5w7mpbny3gpzvwdckculahwnvzwpnaekns5dvrj7kma5ra.ipfs.nftstorage.link/";
 export const royalty = 1000; // 100 = 1%
 export const isMutable = false;
 export const newUpdateAuthority = undefined;
-export const mintAuthority = null;
+export const mintAuthority = 'CDtkAZN1PyZSDr8mteexTHivFXSQfy1faqXmagwgG1Z4';
 export const freezeAuthority = null;
 export const verifySignerAsCreator = true;
 
@@ -20,7 +20,7 @@ export const networkName = !!process.env.NETWORK
   : "mainnet";
 
 const mintAddressConfig = {
-  path: "spl/outputs/mintAddress.txt",
+  path: `outputs/${name.replace(" ", "_")}.txt`,
   key: "MINT_ADDRESS",
 };
 export const getMintAddress = async () => {
@@ -33,7 +33,7 @@ export const setMintAddress = async (data: string) => {
 };
 
 const mintKeypairConfig = {
-  path: "spl/outputs/mintKeypair.txt",
+  path: `outputs/${name.replace(" ", "_")}.txt`,
   key: "MINT_KEYPAIR",
 };
 export const setMintKeypair = async (data: string) => {

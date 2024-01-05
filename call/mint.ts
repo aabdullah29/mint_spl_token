@@ -26,7 +26,7 @@ import {
   getMetaplexInstance,
   getNetworkConfig,
   uploadMetadata,
-} from "./helper";
+} from "../splHelper/helper";
 import {
   decimals,
   image,
@@ -38,7 +38,7 @@ import {
   setMintKeypair,
   symbol,
   totalSupply,
-} from "./consts";
+} from "../splHelper/consts";
 require("dotenv").config();
 
 // mint token instuction function

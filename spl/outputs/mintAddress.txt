@@ -1,3 +1,0 @@
-{
-  "MINT_ADDRESS": "F2mfhRCT3nPRMnVLUL23kWYCVKQmqMYmYhmd4tV2ErXs"
-}

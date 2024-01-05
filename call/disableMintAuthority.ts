@@ -14,12 +14,12 @@ import {
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import {
   getNetworkConfig,
-} from "./helper";
+} from "../splHelper/helper";
 import {
-  freezeAuthority,
   getMintAddress,
+  mintAuthority,
   networkName,
-} from "./consts";
+} from "../splHelper/consts";
 require("dotenv").config();
 
 /* 
@@ -30,6 +30,7 @@ const main = async () => {
   const userWallet = Keypair.fromSecretKey(bs58.decode(secretKey));
   console.log("userWallet address: ", userWallet.publicKey.toString());
   const MINT_ADDRESS = await getMintAddress(); //token address
+  console.log(`Updating Authority of Token: ${MINT_ADDRESS}`);
   const network = getNetworkConfig(networkName);
   const connection = new Connection(network.cluster);
 
@@ -37,12 +38,11 @@ const main = async () => {
     createSetAuthorityInstruction(
       toPublicKey(MINT_ADDRESS), // mint acocunt || token account
       userWallet.publicKey, // current auth
-      AuthorityType.FreezeAccount, // authority type
-      freezeAuthority? toPublicKey(freezeAuthority): null // new auth (you can pass `null` to close it or PubKey)
+      AuthorityType.MintTokens, // authority type
+      null // new auth (you can pass `null` to close it or PubKey)
     )
   );
 
-  console.log(`Updating Authority of Token: ${MINT_ADDRESS}`);
   
   const transactionId = await sendAndConfirmTransaction(
     connection,

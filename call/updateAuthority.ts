@@ -14,12 +14,12 @@ import {
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import {
   getNetworkConfig,
-} from "./helper";
+} from "../splHelper/helper";
 import {
   getMintAddress,
   mintAuthority,
   networkName,
-} from "./consts";
+} from "../splHelper/consts";
 require("dotenv").config();
 
 /* 
@@ -34,12 +34,15 @@ const main = async () => {
   const network = getNetworkConfig(networkName);
   const connection = new Connection(network.cluster);
 
+  if (!mintAuthority){
+    throw Error("mintAuthority is not set.")
+  }
   let authorityTransaction = new Transaction().add(
     createSetAuthorityInstruction(
       toPublicKey(MINT_ADDRESS), // mint acocunt || token account
       userWallet.publicKey, // current auth
       AuthorityType.MintTokens, // authority type
-      mintAuthority? toPublicKey(mintAuthority): null // new auth (you can pass `null` to close it or PubKey)
+      toPublicKey(mintAuthority) // new auth (you can pass `null` to close it or PubKey)
     )
   );
 

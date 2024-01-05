@@ -1,7 +1,7 @@
 import { PublicKey, Keypair, Connection } from "@solana/web3.js";
 import { toPublicKey } from "@metaplex-foundation/js";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { getMetaplexInstance, getNetworkConfig } from "./helper";
+import { getMetaplexInstance, getNetworkConfig } from "../splHelper/helper";
 import {
   getMintAddress,
   image,
@@ -12,7 +12,7 @@ import {
   royalty,
   symbol,
   verifySignerAsCreator,
-} from "./consts";
+} from "../splHelper/consts";
 require("dotenv").config();
 
 const secretKey: any = process.env.USER_WALLET;
