@@ -11,7 +11,7 @@ export const image =
 export const royalty = 1000; // 100 = 1%
 export const isMutable = false;
 export const newUpdateAuthority = undefined;
-export const mintAuthority = 'CDtkAZN1PyZSDr8mteexTHivFXSQfy1faqXmagwgG1Z4';
+export const mintAuthority = null;
 export const freezeAuthority = null;
 export const verifySignerAsCreator = true;
 
